@@ -4,6 +4,7 @@ let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const public_users = express.Router();
 
+let books_array = Object.values(books);
 
 public_users.post("/register", (req,res) => {
   //Write your code here
@@ -12,12 +13,12 @@ public_users.post("/register", (req,res) => {
  if (username && password){
     if (!isValid(username)) { 
         users.push({"username":username,"password":password});
-        return res.status(200).json({message: "User successfully registred. Now you can login"});
+        return res.status(200).json({message: "User successfully registered. Now you can login"});
       } else {
         return res.status(404).json({message: "User already exists!"});    
       }
     } ;
-    return res.status(404).json({message: "Unable to register user."});
+    return res.status(404).json({message: "Unable to register user, missing username and or password."});
  
 });
 
@@ -43,7 +44,7 @@ public_users.get('/author/:author',function (req, res) {
   //Write your code here
   let lookup_author = req.params.author.toLowerCase();
 
-  let books_array = Object.values(books);
+  //let books_array = Object.values(books);
   let selected_books = [];
 
   
@@ -63,7 +64,19 @@ public_users.get('/author/:author',function (req, res) {
 // Get all books based on title
 public_users.get('/title/:title',function (req, res) {
   //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+  const lookup_title = req.params.title.toLowerCase();
+  let selected_books = [];
+  books_array.forEach((book,index,array)=>{
+    if (book.title.toLowerCase() === lookup_title ){
+        selected_books.push(book);
+
+    }});
+
+    if (selected_books.length === 0){
+        return res.send("There are no matching titles");
+    };
+    return res.send(selected_books);
+
 });
 
 //  Get book review
@@ -73,8 +86,15 @@ public_users.get('/review/:isbn',function (req, res) {
   if (isbn == 0 || isbn > Object.keys(books).length)
     return res.send("Invalid isbn");
 
-  let selected_review = books[isbn].reviews;
-  return res.send(selected_review);
+  let selected_review = books[isbn].reviews
+
+  if (Object.keys(selected_review).length == 0){
+    res.send("There are no reviews at this time for isbn # " + isbn);
+    
+  };
+
+
+  return res.send("Reviews for isbn #" + isbn  + selected_review);
  
   
 });
