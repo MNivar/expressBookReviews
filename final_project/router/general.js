@@ -22,62 +22,149 @@ public_users.post("/register", (req,res) => {
  
 });
 
+const getAllBooks = () =>{
+    return new Promise ((resolve,reject) => {
+        if(books){
+            resolve(books);
+        }
+        else{
+            reject("Error retrieving books");
+        }
+    });
+};
+
+
 // Get the book list available in the shop
 public_users.get('/',function (req, res) {
-  res.send(JSON.stringify(books,null,4));
+    getAllBooks()
+    .then((allbooks) => {
+        res.send(JSON.stringify(allbooks,null,4));
+    })
+    .catch((error) =>{
+        res.status(404).send(error);
+    });
 });
+
+
+
+const getBooksbyISBN = (lookup_isbn) => {
+
+    return new Promise ((resolve,reject) => {
+        if (lookup_isbn ==0 || lookup_isbn > Object.keys(books).length){
+            reject("Invalid ISBN");
+          }
+
+          else {
+            resolve(books[lookup_isbn]);
+          }
+
+
+    });
+
+};
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn',function (req, res) {
-  //Write your code here
-  let lookup_isbn = parseInt(req.params.isbn);
-  if (lookup_isbn ==0 || lookup_isbn > Object.keys(books).length){
-    return res.send("invalid isbn");
-  }
+    //Write your code here
+    let lookup_isbn = parseInt(req.params.isbn);
 
-  return res.send(books[lookup_isbn]); //JS index starts at 0
-  ;
- });
-  
+    getBooksbyISBN(lookup_isbn)
+    .then((filtered_books)=>{
+        return res.send(filtered_books);
+    })
+    .catch((error)=>{
+
+        res.status(404).send(error);
+
+    });
+
+   });
+
+
 // Get book details based on author
+
+
+const getBooksbyAuthor = (lookup_author) => {
+    return new Promise ((resolve,reject) => {
+
+        let selected_books = [];
+
+        books_array.forEach((book,index,array) => {
+            if (lookup_author === book.author.toLowerCase()){
+                selected_books.push(book);            
+            }
+          });
+
+          if (selected_books.length == 0){
+            reject("No matching author");
+        }
+      
+        else {
+             resolve(selected_books);
+        }
+
+    });
+
+
+};
 public_users.get('/author/:author',function (req, res) {
-  //Write your code here
-  let lookup_author = req.params.author.toLowerCase();
+    let lookup_author = req.params.author.toLowerCase();
+    getBooksbyAuthor(lookup_author)
+        .then((filtered_books)=> {
+            return res.send(filtered_books);
 
-  //let books_array = Object.values(books);
-  let selected_books = [];
+        })
+        .catch((error) => {
+            return res.status(404).send(error);
+        });
 
-  
-  books_array.forEach((book,index,array) => {
-    if (lookup_author === book.author.toLowerCase()){
-        selected_books.push(book);
-    }
+
   });
 
-  if (selected_books.length == 0)
-    return res.send("No matching author");
 
-  res.send(selected_books);
+  const getBooksbyTitle = (lookup_title) =>{
+    return new Promise ((resolve,reject) =>{
 
-});
+        let selected_books = [];
 
-// Get all books based on title
+        books_array.forEach((book,index,array)=>{
+
+            if (book.title.toLowerCase() === lookup_title ){
+                selected_books.push(book);
+        }})
+
+        if (selected_books.length == 0){
+            reject("No matching titles")
+        }
+        else {
+            resolve(selected_books);
+        }
+
+
+    })
+
+
+  }
+
+  // Get all books based on title
 public_users.get('/title/:title',function (req, res) {
-  //Write your code here
-  const lookup_title = req.params.title.toLowerCase();
-  let selected_books = [];
-  books_array.forEach((book,index,array)=>{
-    if (book.title.toLowerCase() === lookup_title ){
-        selected_books.push(book);
 
-    }});
+    const lookup_title = req.params.title.toLowerCase();
 
-    if (selected_books.length === 0){
-        return res.send("There are no matching titles");
-    };
-    return res.send(selected_books);
+    getBooksbyTitle(lookup_title)
+    .then((selected_books) =>{
 
-});
+        return res.send(selected_books);
+
+    })
+    .catch((error) => {
+        res.status(404).send(error);
+    })
+
+
+  
+  });
+
 
 //  Get book review
 public_users.get('/review/:isbn',function (req, res) {
